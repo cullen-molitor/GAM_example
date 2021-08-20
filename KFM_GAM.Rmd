@@ -1,0 +1,43 @@
+---
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning =  FALSE)
+knitr::opts_chunk$set(results = 'asis')
+library(tidyverse)
+library(mgcv)
+library(gratia)
+options(scipen = 999)
+```
+
+``` {r DATA}
+Mod_df <- readr::read_csv("Mixed_Data_2005.csv") |> 
+  dplyr::mutate(
+    SiteCode = as.factor(SiteCode),
+    IslandCode = as.factor(IslandCode),
+    ReserveStatus = as.factor(ReserveStatus)) |> 
+  dplyr::relocate(Latitude, .after = Reference) |> 
+  dplyr::relocate(Longitude, .after = Latitude)
+
+```
+
+```{r GAMs, fig.height=10, fig.width=10}
+mod <- gam(kelp_bass ~ ReserveStatus +
+             IslandCode + 
+             Mean_ONI_Anom +
+             te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
+             s(SiteCode, bs= "re", k=20),
+           data = Mod_df, method = 'REML', family = nb())
+gam.check(mod)
+gratia::appraise(mod, method = "simulate")
+gratia::draw(mod, scales = 'free')
+sum_mod <- summary(mod)
+sum_mod
+a <- sum_mod$p.table
+a
+b <- sum_mod$s.table
+b
+```
+
