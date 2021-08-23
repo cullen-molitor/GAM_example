@@ -116,7 +116,8 @@ for (spp in species) {
       te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) +
       s(SiteCode, bs = "re", k = 20),
     data = df, method = 'REML', family = nb()) 
-  
+  # We can call these individually for a cleaner output
+  # I call them all here for the quick and dirty output
   assign(spp_mod, GAM_Model)
   cat("\n\n\n\n\n") 
   print(spp_mod)
