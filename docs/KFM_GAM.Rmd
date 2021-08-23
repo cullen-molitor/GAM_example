@@ -1,0 +1,109 @@
+---
+output: 
+  html_document:
+    code_folding: hide
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning =  FALSE)
+# knitr::opts_chunk$set(results = 'asis')
+library(tidyverse)
+library(here)
+library(mgcv)
+library(gratia)
+# library(itsadug)
+# options(scipen = 999)
+
+# The species from our data we are intersted in modeling
+species <- 
+  c("warty_sea_cucumber", 
+    "Kellets_whelk", 
+    "California_spiny_lobster", 
+    "white_sea_urchin",
+    "garibaldi", 
+    "orange_puffball_sponge", 
+    "bladder_chain_kelp", 
+    "red_sea_urchin", 
+    "California_sheephead_male", 
+    "bat_star", 
+    "giant_kelp", 
+    "purple_sea_urchin", 
+    "kelp_bass", 
+    "sunflower_star", 
+    "giant_spined_sea_star", 
+    "Coronado_urchin", 
+    "red_abalone", 
+    "rock_wrasse")
+```
+
+``` {r Wide Data, include=FALSE}
+# This data is "mixed" as it contains biomass, count, and percent cover values depending on the species
+Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) |> 
+  dplyr::mutate(
+    SiteCode = as.factor(SiteCode),
+    IslandCode = as.factor(IslandCode),
+    ReserveStatus = as.factor(ReserveStatus)) 
+
+```
+
+```{r Long Data, include=FALSE}
+# Mixed data cross reference table with associated data types
+Mixed_Data_x_ref <- readr::read_csv(here("data", "Mixed_Data_xref_Fish_Biomass.csv"))
+
+Mixed_Data_Types_Long <- Mixed_Data_Types_Wide |> 
+  pivot_longer(cols = -c(1:10), names_to = "Common_Name", values_to = "Data_Value") |> 
+  left_join(Mixed_Data_x_ref |> select(Common_Name, CommonName, ScientificName, Data_Type)) |> 
+  relocate(Data_Value, .after = ScientificName)
+```
+
+# Testing `mgcv::gam()` model for warty sea cucumbers
+
+```{r GAM Test Model}
+GAM_Model <- gam(
+  warty_sea_cucumber ~ 
+    ReserveStatus +
+    IslandCode + 
+    Mean_ONI_Anom +
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
+    s(SiteCode, bs= "re", k=20),
+  data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
+GAM_Model
+```
+
+# Using `mgcv::gam.check()` to inspect our fitted gam object
+
+```{r GAM Check}
+gam.check(GAM_Model)
+```
+
+# Using `gratia::appraise()` for model diagnostics 
+
+```{r GAM Model Gratia Appraise Plots}
+gratia::appraise(GAM_Model, method = "simulate")
+```
+
+# Using `gratia::draw()`  
+
+```{r GAM Model Gratia Draw Plots, fig.height=8, fig.width=15}
+gratia::draw(GAM_Model, scales = 'free')
+```
+
+# GAM summary
+
+```{r GAM Summary}
+GAM_Model_Summary <- summary.gam(GAM_Model)
+GAM_Model_Summary 
+```
+
+```{r GAMs, fig.height=8, fig.width=11}
+
+mod <- gam(
+  kelp_bass ~ ReserveStatus +
+    IslandCode + 
+    Mean_ONI_Anom +
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
+    s(SiteCode, bs= "re", k=20),
+  data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
+
+```
