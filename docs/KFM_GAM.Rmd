@@ -2,6 +2,8 @@
 output: 
   html_document:
     code_folding: hide
+    toc: true
+    toc_float: true
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T)
@@ -18,22 +20,22 @@ library(gratia)
 # The species from our data we are intersted in modeling
 species <- 
   c("warty_sea_cucumber", 
-    "Kellets_whelk", 
-    "California_spiny_lobster", 
+    "Kellets_whelk",
+    "California_spiny_lobster",
     "white_sea_urchin",
-    "garibaldi", 
-    "orange_puffball_sponge", 
-    "bladder_chain_kelp", 
-    "red_sea_urchin", 
-    "California_sheephead_male", 
-    "bat_star", 
-    "giant_kelp", 
-    "purple_sea_urchin", 
-    "kelp_bass", 
-    "sunflower_star", 
-    "giant_spined_sea_star", 
-    "Coronado_urchin", 
-    "red_abalone", 
+    "garibaldi",
+    "orange_puffball_sponge",
+    "bladder_chain_kelp",
+    "red_sea_urchin",
+    "California_sheephead_male",
+    "bat_star",
+    "giant_kelp",
+    "purple_sea_urchin",
+    "kelp_bass",
+    "sunflower_star",
+    "giant_spined_sea_star",
+    "Coronado_urchin",
+    "red_abalone",
     "rock_wrasse")
 ```
 
@@ -100,8 +102,6 @@ GAM_Model_Summary
 
 ```{r GAMs}
 
-# gam_list <- list()
-
 for (spp in species) {
   
   df <- filter(Mixed_Data_Types_Long, Common_Name == spp)
@@ -118,10 +118,10 @@ for (spp in species) {
     data = df, method = 'REML', family = nb()) 
   
   assign(spp_mod, GAM_Model)
-  # gam_list[[spp_mod]] <- GAM_Model 
+  cat("\n\n\n\n\n") 
   print(spp_mod)
-  print("\n\n\n\n")
   print(summary(GAM_Model))
+  
 }
 
 ```
