@@ -121,10 +121,16 @@ for (spp in species) {
   # I call them all here for the quick and dirty output
   
   assign(spp_mod, GAM_Model)
-  cat("\n\n\n\n\n") 
   print(spp_mod)
   print(summary(GAM_Model))
+  cat("\n\n\n\n\n") 
   
 }
 
 ```
+
+
+```{r}
+
+```
+
