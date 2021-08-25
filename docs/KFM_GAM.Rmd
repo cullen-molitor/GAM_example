@@ -9,7 +9,6 @@ output:
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(warning =  FALSE)
-# knitr::opts_chunk$set(results = 'asis')
 library(tidyverse)
 library(here)
 library(mgcv)
@@ -17,7 +16,7 @@ library(gratia)
 # library(itsadug)
 # options(scipen = 999)
 
-# The species from our data we are intersted in modeling
+# The species from our data we are interested in modeling
 species <- 
   c("warty_sea_cucumber", 
     "Kellets_whelk",
@@ -40,7 +39,8 @@ species <-
 ```
 
 ``` {r Wide Data, include=FALSE}
-# This data is "mixed" as it contains biomass, count, and percent cover values depending on the species
+# This data is "mixed" as it contains biomass, count, and percent cover values 
+# depends on the species and the next code chunk has "tidy data" with data type
 Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) |> 
   dplyr::mutate(
     SiteCode = as.factor(SiteCode),
@@ -116,8 +116,10 @@ for (spp in species) {
       te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) +
       s(SiteCode, bs = "re", k = 20),
     data = df, method = 'REML', family = nb()) 
+  
   # We can call these individually for a cleaner output
   # I call them all here for the quick and dirty output
+  
   assign(spp_mod, GAM_Model)
   cat("\n\n\n\n\n") 
   print(spp_mod)
