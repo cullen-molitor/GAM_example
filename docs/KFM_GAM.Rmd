@@ -118,6 +118,7 @@ for (spp in species) {
     data = df, method = 'REML', family = nb()) 
   
   # We can call these individually for a cleaner output
+  # Look at next code chunk for example on how to call 
   # I call them all here for the quick and dirty output
   
   assign(spp_mod, GAM_Model)
@@ -131,6 +132,6 @@ for (spp in species) {
 
 
 ```{r}
-summary(warty_sea_cucumber_GAM)
+# summary(warty_sea_cucumber_GAM)
 ```
 
