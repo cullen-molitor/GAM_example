@@ -41,7 +41,7 @@ species <-
 ``` {r Wide Data, include=FALSE}
 # This data is "mixed" as it contains biomass, count, and percent cover values 
 # depends on the species and the next code chunk has "tidy data" with data type
-Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) |> 
+Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) %>% 
   dplyr::mutate(
     SiteCode = as.factor(SiteCode),
     IslandCode = as.factor(IslandCode),
@@ -53,9 +53,9 @@ Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) |>
 # Mixed data cross reference table with associated data types
 Mixed_Data_x_ref <- readr::read_csv(here("data", "Mixed_Data_xref_Fish_Biomass.csv"))
 
-Mixed_Data_Types_Long <- Mixed_Data_Types_Wide |> 
-  pivot_longer(cols = -c(1:10, 167:169), names_to = "Common_Name", values_to = "Data_Value") |> 
-  left_join(Mixed_Data_x_ref |> select(Common_Name, CommonName, ScientificName, Data_Type)) |> 
+Mixed_Data_Types_Long <- Mixed_Data_Types_Wide %>% 
+  pivot_longer(cols = -c(1:10, 167:169), names_to = "Common_Name", values_to = "Data_Value") %>% 
+  left_join(Mixed_Data_x_ref %>% select(Common_Name, CommonName, ScientificName, Data_Type)) %>% 
   relocate(Data_Value, .after = ScientificName)
 ```
 
@@ -131,6 +131,6 @@ for (spp in species) {
 
 
 ```{r}
-
+summary(warty_sea_cucumber_GAM)
 ```
 
