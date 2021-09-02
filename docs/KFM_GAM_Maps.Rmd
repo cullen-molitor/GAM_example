@@ -9,6 +9,7 @@ library(tidyverse)
 library(sf)
 library(here)
 library(mgcv)
+library(mgcViz)
 ```
 
 ```{r}
@@ -33,6 +34,12 @@ warty_resids <- Mixed_Data_Types_Wide |>
   cbind("residuals" = resid(GAM_Model))
 
 ```
+
+```{r}
+gam_vis <- getViz(GAM_Model)
+check.gamViz(gam_vis)
+```
+
 
 ```{r}
 chis <- sf::st_read(
