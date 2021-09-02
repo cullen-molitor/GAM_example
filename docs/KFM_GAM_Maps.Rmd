@@ -1,0 +1,24 @@
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tmap)
+library(tidyverse)
+library(sf)
+library(here)
+```
+
+
+```{r}
+chis <- sf::st_read(
+  dsn = here("data", "chis.gpkg"), 
+  layer = "chis") 
+
+ggplot() +
+  geom_sf(data = chis, fill = "grey40") +
+  coord_sf(xlim = c(-120.75, -118.75), ylim = c(33.3, 34.6)) +
+  theme_minimal()
+```
+
