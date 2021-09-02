@@ -55,6 +55,7 @@ ggplot() +
                  color = residuals, size = residuals)) +
   scale_color_viridis_c() +
   # coord_sf(xlim = c(-120.75, -118.75), ylim = c(33.3, 34.6)) +
-  theme_classic() 
+  theme_classic() +
+  theme(legend.position = "bottom")
 ```
 
