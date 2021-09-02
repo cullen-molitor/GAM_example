@@ -8,17 +8,48 @@ library(tmap)
 library(tidyverse)
 library(sf)
 library(here)
+library(mgcv)
 ```
 
+```{r}
+Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) %>% 
+  dplyr::mutate(
+    SiteCode = as.factor(SiteCode),
+    IslandCode = as.factor(IslandCode),
+    ReserveStatus = as.factor(ReserveStatus)) 
+
+GAM_Model <- gam(
+  warty_sea_cucumber ~ 
+    ReserveStatus +
+    IslandCode + 
+    Mean_ONI_Anom +
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
+    s(SiteCode, bs = "re", k = 20),
+  data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
+
+warty_resids <- Mixed_Data_Types_Wide |> 
+  select(SiteNumber, IslandCode, IslandName, SiteCode, SiteName, SurveyYear,
+         ReserveStatus, Latitude, Longitude, warty_sea_cucumber) |> 
+  cbind("residuals" = resid(GAM_Model))
+
+```
 
 ```{r}
 chis <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
-  layer = "chis") 
+  layer = "chis") |> 
+  filter(NAME == "Anacapa")
+
+plot_resid <- warty_resids |> 
+  filter(IslandCode == "AN",
+         SurveyYear == 2019)
 
 ggplot() +
   geom_sf(data = chis, fill = "grey40") +
-  coord_sf(xlim = c(-120.75, -118.75), ylim = c(33.3, 34.6)) +
+  geom_point(data = plot_resid, 
+             aes(x = Longitude, y = Latitude, 
+                 color = residuals, size = residuals)) +
+  # coord_sf(xlim = c(-120.75, -118.75), ylim = c(33.3, 34.6)) +
   theme_minimal()
 ```
 
