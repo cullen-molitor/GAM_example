@@ -10,6 +10,7 @@ library(sf)
 library(here)
 library(mgcv)
 library(mgcViz)
+library(gganimate)
 ```
 
 ```{r}
@@ -66,3 +67,38 @@ ggplot() +
   theme(legend.position = "bottom")
 ```
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+plot_resid <- warty_resids |> 
+  filter(IslandCode == "AN")
+
+ggplot() +
+  geom_sf(data = chis, fill = "grey40") +
+  geom_point(data = plot_resid,
+             aes(x = Longitude, y = Latitude,
+                 color = residuals, size = residuals)) +
+  scale_color_viridis_c() +
+  scale_size_continuous(range = c(1,10)) +
+  scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+  gganimate::transition_states(SurveyYear) +
+  labs(title = '{closest_state}')
+  theme_classic() +
+  theme(legend.position = "bottom")
+```
