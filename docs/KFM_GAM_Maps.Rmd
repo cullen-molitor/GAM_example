@@ -45,11 +45,16 @@ plot_resid <- warty_resids |>
          SurveyYear == 2019)
 
 ggplot() +
+  # geom_raster(data = plot_resid, 
+  #             aes(x = Longitude, y = Latitude, fill = residuals),
+  #             interpolate = T) +
+  # scale_fill_viridis_c() +
   geom_sf(data = chis, fill = "grey40") +
-  geom_point(data = plot_resid, 
-             aes(x = Longitude, y = Latitude, 
+  geom_point(data = plot_resid,
+             aes(x = Longitude, y = Latitude,
                  color = residuals, size = residuals)) +
+  scale_color_viridis_c() +
   # coord_sf(xlim = c(-120.75, -118.75), ylim = c(33.3, 34.6)) +
-  theme_minimal()
+  theme_classic() 
 ```
 
