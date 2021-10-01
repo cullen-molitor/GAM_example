@@ -13,6 +13,7 @@ library(mgcViz)
 library(gganimate)
 library(gifski)
 library(png)
+library(av)
 
 ```
 
@@ -60,6 +61,11 @@ check.gamViz(gam_vis)
 
 ```{r}
 #just making the map sf objects for each island so I can call them more cleanly in the next section
+chis <- sf::st_read(
+  dsn = here("data", "chis.gpkg"), 
+  layer = "chis")
+#holy crap this just works!!!
+
 chis_sb <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
   layer = "chis") |> 
@@ -84,8 +90,7 @@ chis_sr <- sf::st_read(
 
 ```{r}
 plot_resid <- lobster_resids |> 
-  filter(IslandCode == "SR",
-         SurveyYear == 2019)
+  filter(SurveyYear == 2019) #cut filter islandcode here... wow! worked!
 
 ggplot() +
   # geom_raster(data = plot_resid, 
@@ -121,18 +126,20 @@ ggplot() +
 
 ```{r}
 
-plot_resid <- lobster_resids |> 
-  filter(IslandCode == "SB")
+plot_resid <- lobster_resids 
+
+#|> 
+#  filter(IslandCode == "SB")
 
 anim <- ggplot() +
-  geom_sf(data = chis_sb, fill = "grey40") +
+  geom_sf(data = chis, fill = "grey40") +
   geom_point(data = plot_resid,
              aes(x = Longitude, y = Latitude,
-                 color = residuals, size = residuals)) +
+                 color = residuals, size = abs(residuals))) +
   scale_color_viridis_c() +
   scale_size_continuous(range = c(1,10)) +
   scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
-  gganimate::transition_states(SurveyYear, transition_length = 1, state_length = 1) +
+  gganimate::transition_states(SurveyYear, transition_length = 5, state_length = 10) +
   labs(title = '{closest_state}') +
   enter_fade() +
   exit_fade() +
@@ -140,4 +147,6 @@ anim <- ggplot() +
   theme(legend.position = "bottom")
   
   animate(anim, renderer = gifski_renderer())
+  animate(anim, renderer = av_renderer('chis_residuals.mp4'),
+          width = 1280, height = 720, res = 104, fps = 6, detail = 4)
 ```
