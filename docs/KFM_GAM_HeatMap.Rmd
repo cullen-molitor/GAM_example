@@ -42,8 +42,8 @@ GAM_Model2 <- gam(
     ReserveStatus +
     IslandCode + 
     Mean_ONI_Anom +
-    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
-    s(SiteCode, bs = "re", k = 20),
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 5) + 
+    s(SiteCode, bs = "re", k = 5),
   data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
 
 lobster_resids <- Mixed_Data_Types_Wide %>% 
