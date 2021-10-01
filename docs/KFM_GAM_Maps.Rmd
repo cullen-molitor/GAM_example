@@ -11,6 +11,9 @@ library(here)
 library(mgcv)
 library(mgcViz)
 library(gganimate)
+library(gifski)
+library(png)
+
 ```
 
 ```{r}
@@ -34,22 +37,54 @@ warty_resids <- Mixed_Data_Types_Wide |>
          ReserveStatus, Latitude, Longitude, warty_sea_cucumber) |> 
   cbind("residuals" = resid(GAM_Model))
 
+GAM_Model2 <- gam(
+  California_spiny_lobster ~ 
+    ReserveStatus +
+    IslandCode + 
+    Mean_ONI_Anom +
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
+    s(SiteCode, bs = "re", k = 20),
+  data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
+
+lobster_resids <- Mixed_Data_Types_Wide |> 
+  select(SiteNumber, IslandCode, IslandName, SiteCode, SiteName, SurveyYear,
+         ReserveStatus, Latitude, Longitude, California_spiny_lobster) |> 
+  cbind("residuals" = resid(GAM_Model2))
+
 ```
 
 ```{r}
-gam_vis <- getViz(GAM_Model)
+gam_vis <- getViz(GAM_Model2)
 check.gamViz(gam_vis)
 ```
 
-
 ```{r}
-chis <- sf::st_read(
+#just making the map sf objects for each island so I can call them more cleanly in the next section
+chis_sb <- sf::st_read(
+  dsn = here("data", "chis.gpkg"), 
+  layer = "chis") |> 
+  filter(NAME == "Santa Barbara")
+
+chis_an <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
   layer = "chis") |> 
   filter(NAME == "Anacapa")
 
-plot_resid <- warty_resids |> 
-  filter(IslandCode == "AN",
+chis_sc <- sf::st_read(
+  dsn = here("data", "chis.gpkg"), 
+  layer = "chis") |> 
+  filter(NAME == "Santa Cruz")
+
+chis_sr <- sf::st_read(
+  dsn = here("data", "chis.gpkg"), 
+  layer = "chis") |> 
+  filter(NAME == "Santa Rosa")
+
+```
+
+```{r}
+plot_resid <- lobster_resids |> 
+  filter(IslandCode == "SR",
          SurveyYear == 2019)
 
 ggplot() +
@@ -86,19 +121,23 @@ ggplot() +
 
 ```{r}
 
-plot_resid <- warty_resids |> 
-  filter(IslandCode == "AN")
+plot_resid <- lobster_resids |> 
+  filter(IslandCode == "SB")
 
-ggplot() +
-  geom_sf(data = chis, fill = "grey40") +
+anim <- ggplot() +
+  geom_sf(data = chis_sb, fill = "grey40") +
   geom_point(data = plot_resid,
              aes(x = Longitude, y = Latitude,
                  color = residuals, size = residuals)) +
   scale_color_viridis_c() +
   scale_size_continuous(range = c(1,10)) +
   scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
-  gganimate::transition_states(SurveyYear) +
-  labs(title = '{closest_state}')
+  gganimate::transition_states(SurveyYear, transition_length = 1, state_length = 1) +
+  labs(title = '{closest_state}') +
+  enter_fade() +
+  exit_fade() +
   theme_classic() +
   theme(legend.position = "bottom")
+  
+  animate(anim, renderer = gifski_renderer())
 ```
