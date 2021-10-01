@@ -14,6 +14,7 @@ library(gganimate)
 library(gifski)
 library(png)
 library(av)
+library(cowplot)
 
 ```
 
@@ -60,28 +61,28 @@ check.gamViz(gam_vis)
 ```
 
 ```{r}
-#just making the map sf objects for each island so I can call them more cleanly in the next section
+#just making the map sf objects for each island so I can call them more cleanly in the next section(s)
 chis <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
   layer = "chis")
 #holy crap this just works!!!
 
-chis_sb <- sf::st_read(
+chis_SB <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
   layer = "chis") |> 
   filter(NAME == "Santa Barbara")
 
-chis_an <- sf::st_read(
+chis_AN <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
   layer = "chis") |> 
   filter(NAME == "Anacapa")
 
-chis_sc <- sf::st_read(
+chis_SC <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
   layer = "chis") |> 
   filter(NAME == "Santa Cruz")
 
-chis_sr <- sf::st_read(
+chis_SR <- sf::st_read(
   dsn = here("data", "chis.gpkg"), 
   layer = "chis") |> 
   filter(NAME == "Santa Rosa")
@@ -126,10 +127,9 @@ ggplot() +
 
 ```{r}
 
-plot_resid <- lobster_resids 
+# so this version produces an animation with all the islands in one 
 
-#|> 
-#  filter(IslandCode == "SB")
+plot_resid <- lobster_resids 
 
 anim <- ggplot() +
   geom_sf(data = chis, fill = "grey40") +
@@ -147,6 +147,114 @@ anim <- ggplot() +
   theme(legend.position = "bottom")
   
   animate(anim, renderer = gifski_renderer())
-  animate(anim, renderer = av_renderer('chis_residuals.mp4'),
-          width = 1280, height = 720, res = 104, fps = 6, detail = 4)
+  #animate(anim, renderer = av_renderer('chis_residuals.mp4'),
+          #width = 1280, height = 720, res = 104, fps = 6, detail = 4)  
+          #don't really need this but you can't really save a gif and send it on teams so if you want a mp4 output this is how you do it...
+```
+
+```{r}
+  ###-----------------------------------------------------
+  ## okay going after a cowplot - assembled version of four animated plots because scale = free and geom_sf() do NOT play well together and this faceting map thing is an extremely wild rabbit hole out there in the wild west of the internet. I can afford to make 4 graphs and don't NEED to rely on facet_wrap() to do this for me - 
+  
+  plot_resid <- lobster_resids #can easily change the species here...
+  
+  resid_SB <- plot_resid |> 
+    filter(IslandCode == "SB")
+    
+  resid_AN <- plot_resid |> 
+    filter(IslandCode == "AN")
+    
+  resid_SC <- plot_resid |> 
+    filter(IslandCode == "SC")
+    
+  resid_SR <- plot_resid |> 
+    filter(IslandCode == "SR")
+  
+  
+  SB_anim <- ggplot() +
+  geom_sf(data = chis_SB, fill = "grey40") +
+  geom_point(data = resid_SB,
+             aes(x = Longitude, y = Latitude,
+                 color = residuals, size = abs(residuals))) +
+  scale_color_viridis_c() +
+  scale_size_continuous(range = c(1,10)) +
+  scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+  gganimate::transition_states(SurveyYear, transition_length = 5, state_length = 10) +
+  labs(title = '{closest_state}') +
+  enter_fade() +
+  exit_fade() +
+  theme_classic() +
+  theme(axis.ticks.x = element_blank()) + #goddamn I can't make this go away so whatever
+  theme(legend.position = "none")
+  
+  SB_gif <- animate(SB_anim, width = 240, height = 240, renderer = gifski_renderer())
+  SB_gif
+  
+  AN_anim <- ggplot() +
+  geom_sf(data = chis_AN, fill = "grey40") +
+  geom_point(data = resid_AN,
+             aes(x = Longitude, y = Latitude,
+                 color = residuals, size = abs(residuals))) +
+  scale_color_viridis_c() +
+  scale_size_continuous(range = c(1,10)) +
+  scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+  gganimate::transition_states(SurveyYear, transition_length = 5, state_length = 10) +
+  labs(title = '{closest_state}') +
+  enter_fade() +
+  exit_fade() +
+  theme_classic() +
+    theme(legend.position = "none")
+  
+  SC_anim <- ggplot() +
+  geom_sf(data = chis_SC, fill = "grey40") +
+  geom_point(data = resid_SC,
+             aes(x = Longitude, y = Latitude,
+                 color = residuals, size = abs(residuals))) +
+  scale_color_viridis_c() +
+  scale_size_continuous(range = c(1,10)) +
+  scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+  gganimate::transition_states(SurveyYear, transition_length = 5, state_length = 10) +
+  labs(title = '{closest_state}') +
+  enter_fade() +
+  exit_fade() +
+  theme_classic() +
+    theme(legend.position = "none")
+  
+  SR_anim <- ggplot() +
+  geom_sf(data = chis_SR, fill = "grey40") +
+  geom_point(data = resid_SR,
+             aes(x = Longitude, y = Latitude,
+                 color = residuals, size = abs(residuals))) +
+  scale_color_viridis_c() +
+  scale_size_continuous(range = c(1,10)) +
+  scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+  gganimate::transition_states(SurveyYear, transition_length = 5, state_length = 10) +
+  labs(title = '{closest_state}') +
+  enter_fade() +
+  exit_fade() +
+  theme_classic() +
+    theme(legend.position = "none")
+  
+  legend_anim <- get_legend(SR_anim+
+                              theme(legend.position = "bottom"))
+  
+  #so my thinking here is that instead of anim I can have a baked in plot_grid within animate
+  animate(plot_grid(SB_anim, AN_anim, SC_anim, SR_anim), renderer = gifski_renderer())
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+ # animate(anim, renderer = av_renderer('chis_residuals.mp4'),
+         # width = 1280, height = 720, res = 104, fps = 6, detail = 4)
+  
 ```
