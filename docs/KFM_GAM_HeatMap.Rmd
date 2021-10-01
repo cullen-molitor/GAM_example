@@ -1,0 +1,84 @@
+---
+output: 
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning =  FALSE)
+library(tidyverse)
+library(here)
+library(mgcv)
+library(gratia)
+```
+
+
+```{r}
+Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) %>% 
+  dplyr::mutate(
+    SiteCode = as.factor(SiteCode),
+    IslandCode = as.factor(IslandCode),
+    ReserveStatus = as.factor(ReserveStatus)) 
+
+GAM_Model <- gam(
+  warty_sea_cucumber ~ 
+    ReserveStatus +
+    IslandCode + 
+    Mean_ONI_Anom +
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
+    s(SiteCode, bs = "re", k = 20),
+  data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
+
+warty_resids <- Mixed_Data_Types_Wide %>% 
+  select(SiteNumber, IslandCode, IslandName, SiteCode, SiteName, SurveyYear,
+         ReserveStatus, Latitude, Longitude, warty_sea_cucumber) %>% 
+  cbind("residuals" = resid(GAM_Model))
+
+GAM_Model2 <- gam(
+  California_spiny_lobster ~ 
+    ReserveStatus +
+    IslandCode + 
+    Mean_ONI_Anom +
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
+    s(SiteCode, bs = "re", k = 20),
+  data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
+
+lobster_resids <- Mixed_Data_Types_Wide %>% 
+  select(SiteNumber, IslandCode, IslandName, SiteCode, SiteName, SurveyYear,
+         ReserveStatus, Latitude, Longitude, California_spiny_lobster) %>% 
+  cbind("residuals" = resid(GAM_Model2)) %>% 
+  dplyr::arrange(desc(Longitude)) %>% 
+  dplyr::mutate(SiteCode = fct_inorder(SiteCode),
+                IslandCode = fct_inorder(IslandCode))
+```
+
+
+```{r}
+ggplot() +
+  geom_tile(data = lobster_resids, aes(x = SurveyYear, y = SiteCode, fill = residuals)) +
+  scale_fill_viridis_c(option = "magma") +
+  scale_y_discrete(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
+  # facet_wrap(~IslandCode, ncol = 1, drop = T) +
+  labs(title = "California spiny lobster") +
+  theme_classic()
+  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
