@@ -12,6 +12,7 @@ library(mgcv)
 library(mgcViz)
 library(gganimate)
 library(gifski)
+library(magick)
 library(png)
 library(av)
 library(cowplot)
@@ -179,15 +180,15 @@ anim <- ggplot() +
   scale_color_viridis_c() +
   scale_size_continuous(range = c(1,10)) +
   scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
-  gganimate::transition_states(SurveyYear, transition_length = 5, state_length = 10) +
+  gganimate::transition_states(SurveyYear, transition_length = 2, state_length = 1) +
   labs(title = '{closest_state}') +
   enter_fade() +
   exit_fade() +
   theme_classic() +
-  theme(axis.ticks.x = element_blank()) + #goddamn I can't make this go away so whatever
+  #theme(axis.ticks.x = element_blank()) + #goddamn I can't make this go away so whatever
   theme(legend.position = "none")
   
-  SB_gif <- animate(SB_anim, width = 240, height = 240, renderer = gifski_renderer())
+  SB_gif <- animate(SB_anim, width = 640, height = 360, renderer = magick_renderer())
   SB_gif
   
   AN_anim <- ggplot() +
@@ -205,6 +206,9 @@ anim <- ggplot() +
   theme_classic() +
     theme(legend.position = "none")
   
+  AN_gif <- animate(AN_anim, width = 640, height = 360, renderer = magick_renderer())
+  AN_gif
+  
   SC_anim <- ggplot() +
   geom_sf(data = chis_SC, fill = "grey40") +
   geom_point(data = resid_SC,
@@ -220,6 +224,9 @@ anim <- ggplot() +
   theme_classic() +
     theme(legend.position = "none")
   
+  SC_gif <- animate(SC_anim, width = 640, height = 360, renderer = magick_renderer())
+  SC_gif
+  
   SR_anim <- ggplot() +
   geom_sf(data = chis_SR, fill = "grey40") +
   geom_point(data = resid_SR,
@@ -234,12 +241,34 @@ anim <- ggplot() +
   exit_fade() +
   theme_classic() +
     theme(legend.position = "none")
+    
+  SR_gif <- animate(SR_anim, width = 640, height = 360, renderer = magick_renderer())
+  SR_gif
   
-  legend_anim <- get_legend(SR_anim+
-                              theme(legend.position = "bottom"))
+tdir <- tempdir()
+for(i in 1:100){
+  new_gif <- plot_grid(ggdraw() + draw_image(SR_gif[i], scale = 1),
+                       ggdraw() + draw_image(SC_gif[i], scale = 1),
+                       ggdraw() + draw_image(AN_gif[i], scale = 1),
+                       ggdraw(),
+                       ggdraw(),
+                       ggdraw() + draw_image(SB_gif[i], scale = 1),
+                       ncol=3)
+  
+  ggsave(filename = file.path(tdir, paste0("out_", sprintf("%03d", i), ".png")),
+         plot = new_gif, width = 6.5, height = 3.5, device = "png")
+  print(i)
+}
+  
+png_files <- sort(list.files(path = tdir, pattern = "out_", full.names = TRUE))
+gifski(png_files, gif_file = "chis_faceted_residuals.gif", width = 1280, height = 720, delay = .1, progress = TRUE)
+
+
+  #legend_anim <- get_legend(SR_anim+
+                              #theme(legend.position = "bottom"))
   
   #so my thinking here is that instead of anim I can have a baked in plot_grid within animate
-  animate(plot_grid(SB_anim, AN_anim, SC_anim, SR_anim), renderer = gifski_renderer())
+  #animate(plot_grid(SB_anim, AN_anim, SC_anim, SR_anim), renderer = gifski_renderer())
   
   
   
