@@ -135,3 +135,42 @@ for (spp in species) {
 # summary(warty_sea_cucumber_GAM)
 ```
 
+
+
+
+```{r}
+
+for (spp in species) {
+  
+  spp_resids <- paste(spp, "resids", sep = "_")
+  spp_mod <- eval(parse(text = paste(spp, "GAM", sep = "_")))
+  
+  resids <- Mixed_Data_Types_Wide %>% 
+    select(SiteNumber, IslandCode, IslandName, SiteCode, SiteName, SurveyYear,
+           ReserveStatus, Latitude, Longitude, spp) %>% 
+    cbind("residuals" = resid(spp_mod)) %>% 
+  dplyr::arrange(desc(Longitude)) %>% 
+  dplyr::mutate(SiteCode = fct_inorder(SiteCode))
+  
+  assign(spp_resids, resids)
+}
+```
+
+```{r}
+for (spp in species) {
+  
+  spp_resids <- eval(parse(text = paste(spp, "resids", sep = "_")))
+  title <- gsub(pattern = "_", replacement = " ", spp) 
+    
+  p <- ggplot() +
+    geom_tile(data = spp_resids, aes(x = SurveyYear, y = SiteCode, fill = residuals)) +
+    scale_fill_viridis_c(option = "magma") +
+    scale_y_discrete(expand = c(0, 0)) +
+    scale_x_continuous(expand = c(0, 0)) +
+    # facet_wrap(~IslandCode, ncol = 1, drop = T) +
+    labs(title = title) +
+    theme_classic()
+  print(p)
+}
+```
+
