@@ -17,11 +17,11 @@ library(gratia)
 
 
 ```{r}
-Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) %>% 
-  dplyr::mutate(
-    SiteCode = as.factor(SiteCode),
-    IslandCode = as.factor(IslandCode),
-    ReserveStatus = as.factor(ReserveStatus)) 
+Mixed_Data_Types_Wide <- readr::read_csv(here("data", "Mixed_Data_2005.csv")) %>%   
+  dplyr::arrange(desc(Longitude)) %>% 
+  dplyr::mutate(SiteCode = fct_inorder(SiteCode),
+                IslandCode = fct_inorder(IslandCode),
+                ReserveStatus = fct_inorder(ReserveStatus))
 
 GAM_Model <- gam(
   warty_sea_cucumber ~ 
@@ -55,7 +55,6 @@ lobster_resids <- Mixed_Data_Types_Wide %>%
                 IslandCode = fct_inorder(IslandCode))
 ```
 
-
 ```{r}
 ggplot() +
   geom_tile(data = lobster_resids, aes(x = SurveyYear, y = SiteCode, fill = residuals)) +
@@ -68,8 +67,35 @@ ggplot() +
   
 ```
 
+```{r just messing around with other variables}
 
-
+ggplot() +
+  geom_tile(data = Mixed_Data_Types_Wide, aes(x = SurveyYear, y = SiteCode, fill = giant_kelp)) +
+  scale_fill_viridis_c(option = "magma") +
+  scale_y_discrete(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
+  # facet_wrap(~IslandCode, ncol = 1, drop = T) +
+  labs(title = "Shannon") +
+  theme_classic()
+  
+ggplot() +
+  geom_raster(data = Mixed_Data_Types_Wide, aes(x = SurveyYear, y = SiteCode, fill = shannon_2005)) +
+  scale_fill_viridis_c(option = "magma") +
+  scale_y_discrete(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
+  # facet_wrap(~IslandCode, ncol = 1, drop = T) +
+  labs(title = "Shannon") +
+  theme_classic()
+  
+ggplot() +
+  geom_raster(data = Mixed_Data_Types_Wide, aes(x = SurveyYear, y = SiteCode, fill = simpson_2005)) +
+  scale_fill_viridis_c(option = "magma") +
+  scale_y_discrete(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
+  # facet_wrap(~IslandCode, ncol = 1, drop = T) +
+  labs(title = "Shannon") +
+  theme_classic()
+```
 
 
 
