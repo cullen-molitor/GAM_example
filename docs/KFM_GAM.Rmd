@@ -202,12 +202,13 @@ GAMS <- Mixed_Data_Types_Long %>%
 
 ```{r GAM Test Model}
 GAM_Model <- gam(
-  warty_sea_cucumber ~ 
+  California_spiny_lobster ~ 
     ReserveStatus +
     IslandCode + 
     Mean_ONI_Anom +
-    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) + 
-    s(SiteCode, bs = "re", k = 20),
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 6) + 
+    s(SiteCode, bs = "re", k = 5) +
+    s(Latitude, Longitude, k = 5),
   data = Mixed_Data_Types_Wide, method = 'REML', family = nb())
 GAM_Model
 ```
@@ -221,7 +222,7 @@ gam.check(GAM_Model)
 # Using `gratia::appraise()` for model diagnostics 
 
 ```{r GAM Model Gratia Appraise Plots}
-gratia::appraise(GAM_Model, method = "simulate")
+print(gratia::appraise(GAM_Model, method = "simulate"))
 ```
 
 # Using `gratia::draw()`  
@@ -239,7 +240,7 @@ GAM_Model_Summary
 
 # Looping through `species` vector
 
-```{r GAMs}
+```{r GAMs and Validation Plots, fig.height=8, fig.width=15}
 
 for (spp in species) {
   
@@ -252,8 +253,9 @@ for (spp in species) {
       ReserveStatus +
       IslandCode +
       Mean_ONI_Anom +
-      te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) +
-      s(SiteCode, bs = "re", k = 20),
+    te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 6) + 
+    s(SiteCode, bs = "re", k = 5) +
+    s(Latitude, Longitude, k = 5),
     data = df, method = 'REML', family = nb()) 
   
   # We can call these individually for a cleaner output
@@ -262,6 +264,9 @@ for (spp in species) {
   
   assign(spp_mod, GAM_Model)
   print(spp_mod)
+  #print(gam.check(GAM_Model))
+  print(gratia::appraise(GAM_Model, method = "simulate"))
+  print(gratia::draw(GAM_Model, scales = 'free'))
   print(summary(GAM_Model))
   cat("\n\n\n\n\n") 
   
@@ -277,7 +282,7 @@ for (spp in species) {
 
 
 
-```{r}
+```{r Combining Residuals from Models into dataframe}
 
 for (spp in species) {
   
@@ -295,7 +300,7 @@ for (spp in species) {
 }
 ```
 
-```{r}
+```{r Plotting heatmaps to check for spatial autocorrelation in residuals+}
 for (spp in species) {
   
   spp_resids <- eval(parse(text = paste(spp, "resids", sep = "_")))
