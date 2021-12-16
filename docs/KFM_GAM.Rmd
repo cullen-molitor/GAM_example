@@ -13,6 +13,8 @@ library(tidyverse)
 library(here)
 library(mgcv)
 library(gratia)
+library(broom)
+library(modelr)
 # library(itsadug)
 # options(scipen = 999)
 
@@ -58,6 +60,143 @@ Mixed_Data_Types_Long <- Mixed_Data_Types_Wide %>%
   left_join(Mixed_Data_x_ref %>% select(Common_Name, CommonName, ScientificName, Data_Type)) %>% 
   relocate(Data_Value, .after = ScientificName)
 ```
+
+```{r}
+GAM_Model <- Mixed_Data_Types_Long %>%
+  filter(Common_Name %in% species) %>%
+  group_by(Common_Name) %>%
+  summarise(
+    tidy(
+      gam(
+        Data_Value ~
+          ReserveStatus +
+          IslandCode +
+          Mean_ONI_Anom +
+          te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) +
+          s(SiteCode, bs = "re", k = 20),
+        method = 'REML', family = nb())
+    )
+  )
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+sp_model <- function(df)
+  gam(
+    Data_Value ~
+      ReserveStatus +
+      IslandCode +
+      Mean_ONI_Anom +
+      te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 6) +
+      s(Latitude, Longitude, k = 5),
+    data = df, method = 'REML', family = nb()
+  )
+
+GAMS <- Mixed_Data_Types_Long %>%
+  filter(Common_Name %in% species) %>%
+  group_by(Common_Name) %>%
+  nest() %>%
+  mutate(model = map(data, sp_model),
+         resids = map2(data, model, add_residuals),
+         predictions = map2(data, model, add_predictions))
+
+GAM_resids <- GAMS %>%
+  unnest(resids, .drop = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+library(data.table)
+
+library(rlang)
+unnest_dt <- function(tbl, col) {
+
+  tbl <- as.data.table(tbl)
+
+  col <- ensyms(col)
+
+  clnms <- syms(setdiff(colnames(tbl), as.character(col)))
+
+  tbl <- as.data.table(tbl)
+
+  tbl <- eval(
+    expr(tbl[, as.character(unlist(!!!col)), by = list(!!!clnms)])
+  )
+
+  colnames(tbl) <- c(as.character(clnms), as.character(col))
+
+  tbl
+}
+
+
+sp_model <- function(df)
+  gam(
+    Data_Value ~
+      ReserveStatus +
+      IslandCode +
+      Mean_ONI_Anom +
+      te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) +
+      s(SiteCode, bs = "re", k = 20),
+    data = df, method = 'REML', family = nb()
+  )
+
+GAMS_nest <- Mixed_Data_Types_Long %>%
+  filter(Common_Name %in% species) %>%
+  group_by(Common_Name) %>%
+  nest() %>%
+  mutate(model = map(data, sp_model),
+         #resids = map2(data, model, add_residuals),
+         predictions = map2(data, model, add_predictions))
+
+GAM_predictions <- GAMS_nest %>%
+  unnest(predictions)
+```
+
+
+```{r}
+GAMS <- Mixed_Data_Types_Long %>% 
+  filter(Common_Name %in% species) %>% 
+  group_by(Common_Name) %>% 
+  summarise(
+    tidy(
+      gam(
+        Data_Value ~ 
+          ReserveStatus +
+          IslandCode +
+          Mean_ONI_Anom +
+          te(SurveyYear, by = interaction(IslandCode, ReserveStatus), k = 15) +
+          s(SiteCode, bs = "re", k = 20),
+        method = 'REML', family = nb()
+      )
+    )
+  )
+```
+
+
+
 
 # Testing `mgcv::gam()` model for warty sea cucumbers
 
